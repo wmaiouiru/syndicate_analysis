@@ -1,0 +1,11 @@
+# For CLI
+fire==0.5.0
+
+# For logging
+loguru==0.7.0
+
+# For creating data frames
+pandas==2.0.1
+
+# For generating graphs
+plotly == 5.16.1
