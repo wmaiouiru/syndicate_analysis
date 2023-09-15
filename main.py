@@ -105,22 +105,36 @@ class Main:
         df[LAST_WITH_ANGELLIST_YEAR] = pd.to_datetime(df[LAST_WITH_ANGELLIST_YEAR]).dt.to_period('Y')
         df[LAST_WITH_YOUR_SYNDICATE_YEAR] = pd.to_datetime(df[LAST_WITH_YOUR_SYNDICATE_YEAR]).dt.to_period('Y')
         df[JOINED_YOUR_SYNDICATE_YEAR] = pd.to_datetime(df[DATE_JOINED_YOUR_SYNDICATE]).dt.to_period('Y')
-        
+        df[LAST_WITH_YOUR_SYNDICATE_YEAR].fillna(pd.Period('1900', freq='Y'), inplace=True) 
+        df[LAST_WITH_ANGELLIST_YEAR].fillna(pd.Period('1900', freq='Y'), inplace=True) 
+        df[LAST_INVESTMENT_WITH_ANGELLIST].fillna(-1, inplace=True)
+        df[LAST_INVESTMENT_WITH_YOUR_SYNDICATE].fillna(-1, inplace=True)
         # Create a pivot table for cohort analysis
         cohort_pivot = df.pivot_table(index=JOINED_YOUR_SYNDICATE_YEAR, 
-                                      columns=LAST_WITH_YOUR_SYNDICATE_YEAR, 
-                                      values=LAST_INVESTMENT_WITH_YOUR_SYNDICATE, 
+                                      columns=LAST_WITH_ANGELLIST_YEAR, 
+                                      values=LAST_INVESTMENT_WITH_ANGELLIST, 
                                       aggfunc='count',
                                         margins=True,  # Add row and column totals
                                         margins_name='Total'  # Customize the name of the total row and column
                                       )
-
         # Fill NaN values with zeros
         cohort_pivot = cohort_pivot.fillna(0)
+        # cohort_pivot.index = cohort_pivot.index.where(cohort_pivot.index != pd.Period('1900', freq='Y'), -1)
+        cohort_pivot.columns = cohort_pivot.columns.where(cohort_pivot.columns != pd.Period('1900', freq='Y'), 'No Investment')
 
         # Print the cohort analysis pivot table
-        print('Cohort Joined Your Syndicate Year to Last Invested with Your Syndicate Year')
+        print('Cohort Joined Your Syndicate Year to Last Invested with AngelList Year')
         print(cohort_pivot.to_markdown())
+
+        # Convert the pivot table to percentages
+        # percentage_cohort_pivot = ((cohort_pivot / total_sum) * 100).round(2)
+        cohort_pivot_total_removed = cohort_pivot.loc[cohort_pivot.index != 'Total', cohort_pivot.columns != 'Total']
+        percentage_cohort_pivot = cohort_pivot_total_removed.div(cohort_pivot_total_removed.sum(axis=1), axis=0) * 100
+        # Remove row and column totals after the fact
+        percentage_cohort_pivot = percentage_cohort_pivot.round(1)
+        # Print the pivot table with percentages
+        print('Cohort Joined Your Syndicate Year to Last Invested with AngelList Year Percent')
+        print(percentage_cohort_pivot.to_markdown())
 
 
 if __name__ == "__main__":
